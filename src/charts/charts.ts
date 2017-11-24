@@ -65,16 +65,20 @@ export class BaseChartDirective implements OnDestroy, OnChanges, OnInit {
   public ngOnChanges(changes: SimpleChanges): void {
     if (this.initFlag) {
       // Check if the changes are in the data or datasets
-      if (changes.hasOwnProperty('data') || changes.hasOwnProperty('datasets')) {
+      if (changes.hasOwnProperty('data') || changes.hasOwnProperty('datasets') || changes.hasOwnProperty('labels')) {
         if (changes['data']) {
           this.updateChartData(changes['data'].currentValue);
-        } else {
+        } else if (changes['datasets']) {
           this.updateChartData(changes['datasets'].currentValue);
+        }
+
+        if (changes['labels']) {
+          this.chart.data.labels = changes["labels"].currentValue;
         }
 
         this.chart.update();
       } else {
-      // otherwise rebuild the chart
+        // otherwise rebuild the chart
         this.refresh();
       }
     }
@@ -125,13 +129,17 @@ export class BaseChartDirective implements OnDestroy, OnChanges, OnInit {
 
   private updateChartData(newDataValues: number[] | any[]): void {
     if (Array.isArray(newDataValues[0].data)) {
-      this.chart.data.datasets.forEach((dataset: any, i: number) => {
-        dataset.data = newDataValues[i].data;
+      if (newDataValues.length === this.chart.data.datasets.length) {
+        this.chart.data.datasets.forEach((dataset: any, i: number) => {
+          dataset.data = newDataValues[i].data;
 
-        if (newDataValues[i].label) {
-          dataset.label = newDataValues[i].label;
-        }
-      });
+          if (newDataValues[i].label) {
+            dataset.label = newDataValues[i].label;
+          }
+        });
+      } else {
+        this.chart.data.datasets = this.getDatasets();
+      }
     } else {
       this.chart.data.datasets[0].data = newDataValues;
     }
